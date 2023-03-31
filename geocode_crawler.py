@@ -3,7 +3,7 @@ import mysql.connector
 from fake_useragent import UserAgent
 import requests as rq
 import time
-
+#
 ua = UserAgent()
 headers = {'user-agent': ua.random}
 
