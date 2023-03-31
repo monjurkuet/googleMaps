@@ -1,1 +1,1 @@
-source /root/Desktop/scripts/googleMaps/env/Scripts/activate
+source env/Scripts/activate
