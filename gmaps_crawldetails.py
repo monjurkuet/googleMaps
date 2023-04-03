@@ -149,7 +149,7 @@ def extract_gmaps_details(gmaps_urls):  # get unprocessed gmaps links and crawl 
             time.sleep(1) 
             driver.get(gmaps_url)
             waitfor('//button[@data-tooltip="Copy phone number"]')
-            time.sleep(1) 
+            time.sleep(4) 
             parse_details(driver,gmaps_url)
             update_gmaps_links(gmaps_url)
         except Exception as e:
