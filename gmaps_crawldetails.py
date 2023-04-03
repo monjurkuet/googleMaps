@@ -158,7 +158,7 @@ def extract_gmaps_details(gmaps_urls):  # get unprocessed gmaps links and crawl 
             driver.quit()
             driver=tor_browser() 
         COUNTER+=1
-        print('Done : {COUNTER} Out of : {TOTAL}') 
+        print(f'Done : {COUNTER} Out of : {TOTAL}') 
     try:
         driver.close()
         driver.quit()
