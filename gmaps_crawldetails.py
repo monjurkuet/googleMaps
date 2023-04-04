@@ -22,7 +22,7 @@ def tor_browser():
    #options.add_argument(f'--proxy-server=socks5://127.0.0.1:9050')
    #options.user_data_dir = "/home/chromeprofileforbots"  
    #return uc.Chrome(user_data_dir="/home/chromeprofileforbots",options=options,version_main=109)  
-   return uc.Chrome(user_data_dir="/home/bravescrapingprofile",browser_executable_path='/usr/bin/brave-browser',headless=False,version_main=109)      
+   return uc.Chrome(user_data_dir="/home/bravescrapingprofile",browser_executable_path='/usr/bin/brave-browser',headless=False)      
                        
 
 def waitfor(xpth):
@@ -159,6 +159,13 @@ def extract_gmaps_details(gmaps_urls):  # get unprocessed gmaps links and crawl 
             driver=tor_browser() 
         COUNTER+=1
         print(f'Done : {COUNTER} Out of : {TOTAL}') 
+        if COUNTER%250==0:
+            try:
+                driver.close()
+                driver.quit()
+                driver=tor_browser() 
+            except Exception as e:
+                print(e)  
     try:
         driver.close()
         driver.quit()
