@@ -10,31 +10,31 @@ import time
 from multiprocessing.pool import ThreadPool, Pool
 import numpy as np
                        
-def waitfor(xpth):
+def waitfor(xpth,driver):
   try: 
     WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.XPATH, xpth)))
   except:
     pass 
 
-def jsclick(xpth):
+def jsclick(xpth,driver):
   try: 
     element=driver.find_element('xpath',xpth)
     driver.execute_script("arguments[0].click();", element)
   except:
     pass   
 
-def navigatepage(location,keyword,COUNTER):
-  waitfor('//div[@id="searchbox"]//input')
+def navigatepage(location,keyword,driver):
+  waitfor('//div[@id="searchbox"]//input',driver)
   driver.find_element('xpath','//div[@id="searchbox"]//input[@id="searchboxinput"]').clear()
   time.sleep(1)
   driver.find_element('xpath','//div[@id="searchbox"]//input[@id="searchboxinput"]').send_keys(location)
   time.sleep(1)
-  jsclick('//button[@aria-label="Search"]')
+  jsclick('//button[@aria-label="Search"]',driver)
   time.sleep(random.uniform(5,10))
   driver.find_element('xpath','//div[@id="searchbox"]//input[@id="searchboxinput"]').clear()
   time.sleep(1)
   driver.find_element('xpath','//div[@id="searchbox"]//input[@id="searchboxinput"]').send_keys(keyword)
-  jsclick('//button[@aria-label="Search"]')
+  jsclick('//button[@aria-label="Search"]',driver)
   time.sleep(random.uniform(15,28))
   while True:
     listings=driver.find_elements('xpath','//div[@role="article"]')
@@ -44,7 +44,7 @@ def navigatepage(location,keyword,COUNTER):
     driver.execute_script('document.querySelector(\'[role="feed"]\').scrollBy(0,50000)')
     time.sleep(random.uniform(5,10))
     after_scrolling_listings= driver.find_elements('xpath','//div[@role="article"]')
-    print(f'Scrolling : {location,keyword,COUNTER}. Total Listing : {len(after_scrolling_listings)}')
+    print(f'Scrolling : {location,keyword}. Total Listing : {len(after_scrolling_listings)}')
     if (len(listings))== (len(after_scrolling_listings)):
       break
   listings_url=[i.find_element('xpath','.//a').get_attribute('href') for i in driver.find_elements('xpath','//div[@role="article"]')]
@@ -63,17 +63,7 @@ def getqueue():
   cursor.execute("SELECT * FROM gmaps_queue WHERE status=0")
   rows=cursor.fetchall()    
   print('Total rows : ',len(rows))
-  return rows
-
-def clickprivacy():
-  try:
-    time.sleep(10) 
-    driver.switch_to.frame(driver.find_element_by_tag_name("iframe"))   
-    driver.find_element('xpath','//div[@id="introAgreeButton"]').click() 
-    time.sleep(10)
-  except:
-    pass 
-  driver.switch_to.default_content()        
+  return rows  
 
 def insert_data(listings_url,query_parameter):
   connection = mysql.connector.connect(
@@ -110,26 +100,32 @@ def update_queue(queueid):
   connection.commit() 
   print(val)
 
-def scroll_gmaps_extract_data(queue_rows):  # scroll google maps and extract gmaps_links
-  driver = uc.Chrome(browser_executable_path='/usr/bin/brave-browser',headless=True,version_main=111)  
-  for queuedata in queue_rows:
-    try:
-      keyword=queuedata[0] 
-      zips=queuedata[1]
-      country=queuedata[2]  
-      queueid=queuedata[4] 
-      query_parameter=keyword+' '+zips+' '+country 
-      time.sleep(3) 
-      driver.get('https://www.google.ca/maps/?hl=en')  
-      #clickprivacy()
-      listings_url=navigatepage(str(zips+' '+country),keyword,COUNTER)
-      insert_data(listings_url,query_parameter)
-      update_queue(queueid)
-    except Exception as e:
-      print(e) 
-      driver.close()
-      driver.quit()
-      driver=uc.Chrome(browser_executable_path='/usr/bin/brave-browser',headless=False,version_main=111)  
+def clickprivacy(driver):
+  try:
+    #driver.switch_to.frame(driver.find_element_by_tag_name("iframe"))   
+    waitfor('//button[@aria-label="Accept all"]',driver)
+    jsclick('//button[@aria-label="Accept all"]',driver)
+    time.sleep(5)
+  except:
+    pass 
+  #driver.switch_to.default_content()  
+
+def scroll_gmaps_extract_data(queuedata):  # scroll google maps and extract gmaps_links
+  driver = uc.Chrome(browser_executable_path='/usr/bin/brave-browser',headless=False,version_main=111)  
+  try:
+    keyword=queuedata[0] 
+    zips=queuedata[1]
+    country=queuedata[2]  
+    queueid=queuedata[4] 
+    query_parameter=keyword+' '+zips+' '+country 
+    time.sleep(3) 
+    driver.get('https://www.google.ca/maps/?hl=en')  
+    clickprivacy(driver)
+    listings_url=navigatepage(str(zips+' '+country),keyword,driver)
+    insert_data(listings_url,query_parameter)
+    update_queue(queueid)
+  except Exception as e:
+    print(e) 
   try:
     driver.close()
     driver.quit()
@@ -140,5 +136,4 @@ if __name__ == "__main__":
   start_time = datetime.now()
   INSTANCES=5
   queue_rows=getqueue()   # get list of unprocessed data from queue
-  queue_rows=np.array_split(queue_rows, INSTANCES)
   ThreadPool(INSTANCES).map(scroll_gmaps_extract_data, queue_rows)  
