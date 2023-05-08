@@ -141,4 +141,4 @@ if __name__ == "__main__":
   INSTANCES=5
   queue_rows=getqueue()   # get list of unprocessed data from queue
   queue_rows=np.array_split(queue_rows, INSTANCES)
-  ThreadPool(INSTANCES).map(scroll_gmaps_extract_data, query_list)  
+  ThreadPool(INSTANCES).map(scroll_gmaps_extract_data, queue_rows)  
