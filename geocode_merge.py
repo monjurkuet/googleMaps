@@ -10,7 +10,7 @@ connection = mysql.connector.connect(host='localhost',
                               ,auth_plugin='caching_sha2_password')
 cursor = connection.cursor()  
 
-sql_query = pd.read_sql_query ('''SELECT * FROM `osm_reverse_geocode` WHERE latitude not in (SELECT latitude from geocode_data) and longitude not in (SELECT longitude from geocode_data)`''', connection)
+sql_query = pd.read_sql_query ('SELECT * FROM `osm_reverse_geocode` WHERE latitude not in (SELECT latitude from geocode_data) and longitude not in (SELECT longitude from geocode_data)', connection)
 
 df_geocode = pd.DataFrame(sql_query)
 dictionary_geocode_normalized=[]
