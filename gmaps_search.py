@@ -137,6 +137,6 @@ def scroll_gmaps_extract_data(queuedata):  # scroll google maps and extract gmap
 
 if __name__ == "__main__":
   start_time = datetime.now()
-  INSTANCES=3
+  INSTANCES=2
   queue_rows=getqueue()   # get list of unprocessed data from queue
   ThreadPool(INSTANCES).map(scroll_gmaps_extract_data, queue_rows)  
