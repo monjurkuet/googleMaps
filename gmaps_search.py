@@ -111,7 +111,10 @@ def clickprivacy(driver):
   #driver.switch_to.default_content()  
 
 def scroll_gmaps_extract_data(queuedata):  # scroll google maps and extract gmaps_links
-  driver = uc.Chrome(browser_executable_path='/usr/bin/brave-browser',headless=False,version_main=111)  
+  options = uc.ChromeOptions()
+  options.add_argument(f'--proxy-server=http://45.85.147.136:24003')
+  driver = uc.Chrome(browser_executable_path='/usr/bin/brave-browser',headless=False,
+                     version_main=111,options=options)  
   try:
     keyword=queuedata[0] 
     zips=queuedata[1]
