@@ -13,19 +13,10 @@ import time
 from multiprocessing.pool import ThreadPool, Pool
 import numpy as np
 
-def switchIP():    
-    with Controller.from_port(port = 9051) as controller:         
-        controller.authenticate()         
-        controller.signal(Signal.NEWNYM)
-        time.sleep(controller.get_newnym_wait())
-
 def tor_browser():
    options = uc.ChromeOptions() 
    options.add_argument(f'--proxy-server=http://45.85.147.136:24003')
-   #options.user_data_dir = "/home/chromeprofileforbots"  
-   #return uc.Chrome(user_data_dir="/home/chromeprofileforbots",options=options,version_main=109)  
-   return uc.Chrome(user_data_dir="/home/bravescrapingprofile",browser_executable_path='/usr/bin/brave-browser',headless=False,options=options)      
-                       
+   return uc.Chrome(user_data_dir="/home/bravescrapingprofile",browser_executable_path='/usr/bin/brave-browser',headless=False,options=options)                           
 
 def waitfor(driver,xpth):
     try: 
@@ -37,19 +28,7 @@ def formaturl(url):
     url=url.strip()
     if not re.match('(?:http|https)://', url):
         return 'http://{}/'.format(url)
-    return url
-
-
-def clickprivacy():
-   try:
-    time.sleep(10) 
-    driver.switch_to.frame(driver.find_element_by_tag_name("iframe"))   
-    driver.find_element('xpath','//div[@id="introAgreeButton"]').click() 
-    time.sleep(10)
-   except:
-      pass 
-   driver.switch_to.default_content()        
-
+    return url  
 
 def geturls():
     connection = mysql.connector.connect(
@@ -66,7 +45,6 @@ def geturls():
     rows=[i[0] for i in rows] 
     print('Total rows : ',len(rows))
     return rows
-
 
 def parse_details(driver,gmaps_url):
     company=driver.title.replace(' - Google Maps','').strip()
@@ -117,7 +95,6 @@ def insert_details(company,rating,category,phone,website,claim_status,latitude,l
     connection.commit() 
     print(val)
 
-
 def update_gmaps_links(gmaps_url):
     connection = mysql.connector.connect(
                                 host='localhost', 
@@ -167,7 +144,5 @@ def extract_gmaps_details(gmaps_urls):  # get unprocessed gmaps links and crawl 
         print(e)    
 
 if __name__ == "__main__":
-    INSTANCES=4
     inputqueue=geturls()
-    inputqueue=np.array_split(inputqueue, 4)
-    ThreadPool(INSTANCES).map(extract_gmaps_details, inputqueue)       
+    extract_gmaps_details(inputqueue)       
