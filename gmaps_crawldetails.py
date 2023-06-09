@@ -11,6 +11,7 @@ from datetime import datetime
 import sys
 import time
 from multiprocessing.pool import ThreadPool, Pool
+import numpy as np
 
 def switchIP():    
     with Controller.from_port(port = 9051) as controller:         
@@ -26,18 +27,11 @@ def tor_browser():
    return uc.Chrome(user_data_dir="/home/bravescrapingprofile",browser_executable_path='/usr/bin/brave-browser',headless=False,options=options)      
                        
 
-def waitfor(xpth):
+def waitfor(driver,xpth):
     try: 
         WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.XPATH, xpth)))
     except:
         pass 
-
-def jsclick(xpth):
-    try: 
-        element=driver.find_element('xpath',xpth)
-        driver.execute_script("arguments[0].click();", element)
-    except:
-        pass   
 
 def formaturl(url):
     url=url.strip()
@@ -141,7 +135,6 @@ def update_gmaps_links(gmaps_url):
     print(val)
 
 def extract_gmaps_details(gmaps_urls):  # get unprocessed gmaps links and crawl more data
-    global driver
     driver=tor_browser() 
     TOTAL = len(gmaps_urls)
     COUNTER=0
@@ -149,7 +142,7 @@ def extract_gmaps_details(gmaps_urls):  # get unprocessed gmaps links and crawl 
         try: 
             time.sleep(1) 
             driver.get(gmaps_url)
-            waitfor('//button[@data-tooltip="Copy phone number"]')
+            waitfor(driver,'//button[@data-tooltip="Copy phone number"]')
             time.sleep(4) 
             parse_details(driver,gmaps_url)
             update_gmaps_links(gmaps_url)
@@ -176,4 +169,5 @@ def extract_gmaps_details(gmaps_urls):  # get unprocessed gmaps links and crawl 
 if __name__ == "__main__":
     INSTANCES=4
     gmaps_urls=geturls()
+    gmaps_urls=np.array_split(gmaps_urls, INSTANCES)
     ThreadPool(INSTANCES).map(extract_gmaps_details, gmaps_urls)       
