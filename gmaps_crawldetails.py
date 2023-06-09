@@ -19,11 +19,11 @@ def switchIP():
         time.sleep(controller.get_newnym_wait())
 
 def tor_browser():
-   #options = uc.ChromeOptions() 
-   #options.add_argument(f'--proxy-server=socks5://127.0.0.1:9050')
+   options = uc.ChromeOptions() 
+   options.add_argument(f'--proxy-server=http://45.85.147.136:24003')
    #options.user_data_dir = "/home/chromeprofileforbots"  
    #return uc.Chrome(user_data_dir="/home/chromeprofileforbots",options=options,version_main=109)  
-   return uc.Chrome(user_data_dir="/home/bravescrapingprofile",browser_executable_path='/usr/bin/brave-browser',headless=False,version_main=111)      
+   return uc.Chrome(user_data_dir="/home/bravescrapingprofile",browser_executable_path='/usr/bin/brave-browser',headless=False,options=options)      
                        
 
 def waitfor(xpth):
