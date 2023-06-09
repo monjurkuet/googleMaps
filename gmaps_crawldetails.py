@@ -169,5 +169,5 @@ def extract_gmaps_details(gmaps_urls):  # get unprocessed gmaps links and crawl 
 if __name__ == "__main__":
     INSTANCES=4
     gmaps_urls=geturls()
-    inputqueue=np.array_split(gmaps_urls, 100)
+    inputqueue=np.array_split(gmaps_urls, 4)
     ThreadPool(INSTANCES).map(extract_gmaps_details, inputqueue)       
