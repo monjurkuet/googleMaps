@@ -10,6 +10,7 @@ import json
 from datetime import datetime
 import sys
 import time
+from multiprocessing.pool import ThreadPool, Pool
 
 def switchIP():    
     with Controller.from_port(port = 9051) as controller:         
@@ -173,5 +174,6 @@ def extract_gmaps_details(gmaps_urls):  # get unprocessed gmaps links and crawl 
         print(e)    
 
 if __name__ == "__main__":
+    INSTANCES=4
     gmaps_urls=geturls()
-    extract_gmaps_details(gmaps_urls)       
+    ThreadPool(INSTANCES).map(extract_gmaps_details, gmaps_urls)       
