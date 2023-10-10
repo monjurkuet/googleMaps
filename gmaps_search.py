@@ -10,7 +10,7 @@ from multiprocessing.pool import ThreadPool
 import json
 from tqdm import tqdm
 
-conn = sqlite3.connect('database.db')
+conn = sqlite3.connect('database.db', check_same_thread=False)
 cursor = conn.cursor()
 
 
@@ -128,6 +128,6 @@ def scroll_gmaps_extract_data(queuedata):
 
 
 if __name__ == "__main__":
-    INSTANCES = 4
+    INSTANCES = 2
     queue_rows = getqueue()   # get list of unprocessed data from queue
-    tqdm(ThreadPool(INSTANCES).map(scroll_gmaps_extract_data, queue_rows))
+    tqdm(ThreadPool(INSTANCES).map(scroll_gmaps_extract_data, queue_rows), total=len(queue_rows))
