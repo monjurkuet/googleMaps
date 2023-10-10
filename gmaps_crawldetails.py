@@ -3,14 +3,13 @@ import undetected_chromedriver as uc
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
-import mysql.connector
+import sqlite3
 from urllib.parse import urlparse
 import time
 
-def tor_browser():
-   options = uc.ChromeOptions() 
-   options.add_argument(f'--proxy-server=http://45.85.147.136:24003')
-   return uc.Chrome(user_data_dir="/home/bravescrapingprofile",browser_executable_path='/usr/bin/brave-browser',headless=False,options=options)                           
+conn = sqlite3.connect('database.db', check_same_thread=False)
+cursor = conn.cursor()
+
 
 def waitfor(driver,xpth):
     try: 
