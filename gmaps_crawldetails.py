@@ -1,17 +1,11 @@
 import time,re,random
-from time import sleep
 import undetected_chromedriver as uc
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 import mysql.connector
 from urllib.parse import urlparse
-import json
-from datetime import datetime
-import sys
 import time
-from multiprocessing.pool import ThreadPool, Pool
-import numpy as np
 
 def tor_browser():
    options = uc.ChromeOptions() 

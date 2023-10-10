@@ -105,7 +105,7 @@ def clickprivacy(driver):
 
 # scroll google maps and extract gmaps_links
 def scroll_gmaps_extract_data(queuedata):
-    driver = uc.Chrome()
+    driver = uc.Chrome(headless=True)
     try:
         keyword = queuedata[0]
         lat = queuedata[1]
