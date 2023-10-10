@@ -13,7 +13,6 @@ from tqdm import tqdm
 conn = sqlite3.connect('database.db', check_same_thread=False)
 cursor = conn.cursor()
 
-
 def waitfor(xpth, driver):
     try:
         WebDriverWait(driver, 15).until(
@@ -21,14 +20,12 @@ def waitfor(xpth, driver):
     except:
         pass
 
-
 def jsclick(xpth, driver):
     try:
         element = driver.find_element('xpath', xpth)
         driver.execute_script("arguments[0].click();", element)
     except:
         pass
-
 
 def navigatepage(location, keyword, driver):
     waitfor('//div[@id="searchbox"]//input', driver)
@@ -65,13 +62,11 @@ def navigatepage(location, keyword, driver):
                     for i in driver.find_elements('xpath', '//div/a[contains(@href,"/maps/place")]')]
     return listings_url
 
-
 def getqueue():
     cursor.execute("SELECT keyword,lat,lon,id FROM gmaps_queue WHERE status=0")
     rows = cursor.fetchall()
     print('Total rows : ', len(rows))
     return rows
-
 
 def insert_data(listings_url, query_parameter):
     for listing_url in listings_url:
@@ -83,14 +78,12 @@ def insert_data(listings_url, query_parameter):
         conn.commit()
         print(data_tuple)
 
-
 def update_queue(id):
     sql = "UPDATE gmaps_queue SET status=1 WHERE id = ?"
     val = (id,)
     cursor.execute(sql, val)
     conn.commit()
     print(val)
-
 
 def clickprivacy(driver):
     try:
@@ -101,7 +94,6 @@ def clickprivacy(driver):
     except:
         pass
     # driver.switch_to.default_content()
-
 
 # scroll google maps and extract gmaps_links
 def scroll_gmaps_extract_data(queuedata):
@@ -125,7 +117,6 @@ def scroll_gmaps_extract_data(queuedata):
         driver.quit()
     except Exception as e:
         print(e)
-
 
 if __name__ == "__main__":
     INSTANCES = 2
