@@ -1,27 +1,29 @@
 import json
-import mysql.connector
 from fake_useragent import UserAgent
 import requests as rq
 import time
-#
+from geodatalocation import geodata_database_location
+import sqlite3
+
 ua = UserAgent()
 headers = {'user-agent': ua.random}
 
-connection = mysql.connector.connect(#host='localhost', 
-                              host='161.97.97.183',
-                              database='location_data',
-                              user='root', 
-                              password='$C0NTaB0vps8765%%$#', 
-                              port=3306
-                              ,auth_plugin='caching_sha2_password')
-cursor = connection.cursor()  
+conn = sqlite3.connect('database.db', check_same_thread=False)
+cursor = conn.cursor()
+
+conn_location = sqlite3.connect(geodata_database_location, check_same_thread=False)
+cursor_location = conn_location.cursor()
 
 base_url='https://nominatim.openstreetmap.org/reverse?format=json&lat={latitude}&lon={longitude}&email=muhamad.manjur@outlook.com'
 
-sql_select_Query = "SELECT DISTINCT latitude,longitude FROM `gmaps_details` where (latitude,longitude) not in (SELECT DISTINCT latitude,longitude FROM location_data.osm_reverse_geocode)"
-cursor = connection.cursor()
-cursor.execute(sql_select_Query)
-geocodes = cursor.fetchall()   
+googlemaps_select_Query = "SELECT DISTINCT latitude,longitude FROM `gmaps_details` where (latitude,longitude) not in (SELECT DISTINCT latitude,longitude FROM location_data.osm_reverse_geocode)"
+location_select_Query = "SELECT latitude,longitude FROM location_data.osm_reverse_geocode)"
+
+cursor.execute(googlemaps_select_Query)
+geocodes_googlemaps = cursor.fetchall()   
+
+list(set(x).symmetric_difference(set(f)))
+
 TOTAL=len(geocodes)
 COUNTER=0
 
@@ -37,7 +39,7 @@ for latitude,longitude in geocodes:
    sqlite_insert_with_param = """INSERT IGNORE INTO osm_reverse_geocode
                           (address,display_name,latitude,longitude) 
                           VALUES (%s,%s,%s,%s);""" 
-   data_tuple = (str(address),display_name,latitude,longitude)
+   data_tuple = (json.dumps(address),display_name,latitude,longitude)
    cursor.execute(sqlite_insert_with_param, data_tuple)
    connection.commit()
    print(data_tuple)
