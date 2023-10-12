@@ -6,10 +6,10 @@ from selenium.webdriver.common.by import By
 import sqlite3
 from urllib.parse import urlparse
 import time
+from tqdm import tqdm
 
 conn = sqlite3.connect('database.db', check_same_thread=False)
 cursor = conn.cursor()
-
 
 def waitfor(driver,xpth):
     try: 
@@ -17,23 +17,15 @@ def waitfor(driver,xpth):
     except:
         pass 
 
-def formaturl(url):
-    url=url.strip()
-    if not re.match('(?:http|https)://', url):
-        return 'http://{}/'.format(url)
-    return url  
+def parse_domain(url):
+    urlfinal=urlparse(url).netloc.replace("www.", "")
+    if not urlfinal:
+        urlfinal =urlparse(url).path.replace("www.", "")
+    print(urlfinal)
+    return urlfinal.lower()
 
-def geturls():
-    connection = mysql.connector.connect(
-                                host='localhost', 
-                                #host='161.97.97.183',
-                                database='google_maps',
-                                user='root', 
-                                password='$C0NTaB0vps8765%%$#', 
-                                port=3306
-                                ,auth_plugin='caching_sha2_password')
-    cursor = connection.cursor()         
-    cursor.execute("SELECT gmaps_url FROM `gmaps_links` WHERE processed=0")
+def geturls():       
+    cursor.execute("SELECT gmaps_url FROM gmaps_links WHERE gmaps_url NOT IN (SELECT gmaps_url from gmaps_details)")
     rows=cursor.fetchall()   
     rows=[i[0] for i in rows] 
     print('Total rows : ',len(rows))
@@ -55,8 +47,7 @@ def parse_details(driver,gmaps_url):
         phone=None 
     try:
         website=driver.find_element('xpath','//a[@data-tooltip="Open website"]').get_attribute('href').strip()
-        website = urlparse(website)
-        website = '{uri.scheme}://{uri.netloc}/'.format(uri=website)
+        website = parse_domain(website)
     except:
         website=None 
     claim_status='Unclaimed' if driver.find_elements('xpath','//a[@aria-label="Claim this business"]') else 'Claimed'
@@ -71,63 +62,35 @@ def parse_details(driver,gmaps_url):
     insert_details(company,rating,category,phone,website,claim_status,latitude,longitude,gmaps_url)
 
 def insert_details(company,rating,category,phone,website,claim_status,latitude,longitude,gmaps_url):
-    connection = mysql.connector.connect(
-                                host='localhost', 
-                                #host='161.97.97.183',
-                                database='google_maps',
-                                user='root', 
-                                password='$C0NTaB0vps8765%%$#', 
-                                port=3306
-                                ,auth_plugin='caching_sha2_password')
-    cursor = connection.cursor()  
-    sql_insert_with_param = """INSERT IGNORE INTO gmaps_details
+    sql_insert_with_param = """INSERT OR IGNORE INTO gmaps_details
                             (company,rating,category,phone,website,claim_status,latitude,longitude,gmaps_url) 
-                            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s);"""
+                            VALUES (?,?,?,?,?,?,?,?,?);"""
     val = (company,rating,category,phone,website,claim_status,latitude,longitude,gmaps_url)
     cursor.execute(sql_insert_with_param , val)
-    connection.commit() 
-    print(val)
-
-def update_gmaps_links(gmaps_url):
-    connection = mysql.connector.connect(
-                                host='localhost', 
-                                #host='161.97.97.183',
-                                database='google_maps',
-                                user='root', 
-                                password='$C0NTaB0vps8765%%$#', 
-                                port=3306
-                                ,auth_plugin='caching_sha2_password')
-    cursor = connection.cursor()  
-    sql = "UPDATE gmaps_links SET processed=1 WHERE gmaps_url = %s"
-    val = (gmaps_url,)
-    cursor.execute(sql, val)
-    connection.commit() 
+    conn.commit() 
     print(val)
 
 def extract_gmaps_details(gmaps_urls):  # get unprocessed gmaps links and crawl more data
-    driver=tor_browser() 
-    TOTAL = len(gmaps_urls)
+    driver=uc.Chrome(headless=True)
     COUNTER=0
-    for gmaps_url in gmaps_urls:
+    for gmaps_url in tqdm(gmaps_urls):
         try: 
             time.sleep(1) 
             driver.get(gmaps_url)
             waitfor(driver,'//button[@data-tooltip="Copy phone number"]')
             time.sleep(4) 
             parse_details(driver,gmaps_url)
-            update_gmaps_links(gmaps_url)
         except Exception as e:
             print(e) 
             driver.close()
             driver.quit()
-            driver=tor_browser() 
+            driver=uc.Chrome(headless=True)
         COUNTER+=1
-        print(f'Done : {COUNTER} Out of : {TOTAL}') 
         if COUNTER%250==0:
             try:
                 driver.close()
                 driver.quit()
-                driver=tor_browser() 
+                driver=uc.Chrome(headless=True)
             except Exception as e:
                 print(e)  
     try:
