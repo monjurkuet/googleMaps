@@ -63,7 +63,11 @@ def navigatepage(location, keyword, driver):
     return listings_url
 
 def getqueue():
-    cursor.execute("SELECT keyword,lat,lon,id FROM gmaps_queue WHERE status=0")
+    cursor.execute("SELECT distinct keyword FROM gmaps_queue")
+    rows = [i[0] for i in cursor.fetchall()]
+    print(rows)
+    keyword=input()
+    cursor.execute(f"SELECT keyword,lat,lon,id FROM gmaps_queue WHERE status=0 and keyword='{keyword}'")
     rows = cursor.fetchall()
     print('Total rows : ', len(rows))
     return rows
@@ -119,6 +123,6 @@ def scroll_gmaps_extract_data(queuedata):
         print(e)
 
 if __name__ == "__main__":
-    INSTANCES = 2
+    INSTANCES = 1
     queue_rows = getqueue()   # get list of unprocessed data from queue
     tqdm(ThreadPool(INSTANCES).map(scroll_gmaps_extract_data, queue_rows), total=len(queue_rows))
