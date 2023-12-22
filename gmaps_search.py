@@ -101,28 +101,31 @@ def clickprivacy(driver):
 
 # scroll google maps and extract gmaps_links
 def scroll_gmaps_extract_data(queuedata):
-    driver = uc.Chrome(headless=True)
     try:
-        keyword = queuedata[0]
-        lat = queuedata[1]
-        lon = queuedata[2]
-        id = queuedata[3]
-        query_parameter = {'keyword':keyword,'lat':lat,'lon':lon}
-        time.sleep(3)
-        driver.get('https://www.google.ca/maps/?hl=en')
-        clickprivacy(driver)
-        listings_url = navigatepage((str(lat)+', '+str(lon)), keyword, driver)
-        insert_data(listings_url, query_parameter)
-        update_queue(id)
-    except Exception as e:
-        print(e)
-    try:
-        driver.close()
-        driver.quit()
-    except Exception as e:
-        print(e)
+        driver = uc.Chrome(headless=True)
+        try:
+            keyword = queuedata[0]
+            lat = queuedata[1]
+            lon = queuedata[2]
+            id = queuedata[3]
+            query_parameter = {'keyword':keyword,'lat':lat,'lon':lon}
+            time.sleep(3)
+            driver.get('https://www.google.ca/maps/?hl=en')
+            clickprivacy(driver)
+            listings_url = navigatepage((str(lat)+', '+str(lon)), keyword, driver)
+            insert_data(listings_url, query_parameter)
+            update_queue(id)
+        except Exception as e:
+            print(e)
+        try:
+            driver.close()
+            driver.quit()
+        except Exception as e:
+            print(e)
+    except:
+        pass
 
 if __name__ == "__main__":
-    INSTANCES = 1
+    INSTANCES = 2
     queue_rows = getqueue()   # get list of unprocessed data from queue
     tqdm(ThreadPool(INSTANCES).map(scroll_gmaps_extract_data, queue_rows), total=len(queue_rows))
