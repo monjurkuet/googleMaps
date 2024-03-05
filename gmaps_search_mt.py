@@ -14,7 +14,7 @@ class GmapsLinkExtractor:
         self.callback = callback
         self.task_queue = queue.Queue()
         self.workers = []
-        self.num_workers = 4  # You can adjust the number of worker threads as needed
+        self.num_workers = 6  # You can adjust the number of worker threads as needed
         self.page_view_limit = 10
         self.conn = sqlite3.connect('database.db', check_same_thread=False)
         self.cursor = self.conn.cursor()
@@ -60,7 +60,7 @@ class GmapsLinkExtractor:
         #caps['goog:loggingPrefs'] = {'performance': 'ALL'}
         #proxy_server = "127.0.0.1:16379"
         #options.add_argument(f'--proxy-server={proxy_server}')
-        return uc.Chrome(options=options, desired_capabilities=caps)
+        return uc.Chrome(options=options, desired_capabilities=caps,headless=True,use_subprocess=True)
     
     def navigate_page(self, location, keyword, driver):
         wait = WebDriverWait(driver, 15)

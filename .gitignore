@@ -3,3 +3,4 @@ geodatalocation.py
 __pycache__
 *.xlsx
 *.csv
+*.db-journal
