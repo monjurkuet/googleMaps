@@ -164,4 +164,4 @@ for row in queue_rows:
 
 
 # Close the GmapsLinkExtractor
-#gmaps_extractor.close()
+gmaps_extractor.close()
