@@ -95,23 +95,35 @@ class GmapsLinkExtractor:
         return listings_url
     
     def insert_data(self, listings_url, query_parameter):
-        for listing_url in listings_url:
-            sql_insert_with_param = """INSERT OR IGNORE INTO gmaps_links
-                                (gmaps_url, query_parameter) 
-                                VALUES (?, ?);"""
-            data_tuple = (listing_url, json.dumps(query_parameter))
-            # You can uncomment the below lines if you have a 'cursor' object initialized outside the class
-            self.cursor.execute(sql_insert_with_param, data_tuple)
-            self.conn.commit()
-            print(data_tuple)
+        while True:
+            try:
+                for listing_url in listings_url:
+                    sql_insert_with_param = """INSERT OR IGNORE INTO gmaps_links
+                                        (gmaps_url, query_parameter) 
+                                        VALUES (?, ?);"""
+                    data_tuple = (listing_url, json.dumps(query_parameter))
+                    # You can uncomment the below lines if you have a 'cursor' object initialized outside the class
+                    self.cursor.execute(sql_insert_with_param, data_tuple)
+                    self.conn.commit()
+                    print(data_tuple)
+                break
+            except Exception as e:
+                print(e)
+            time.sleep(2)
     
     def update_queue(self, id):
-        sql = "UPDATE gmaps_queue SET status=1 WHERE id = ?"
-        val = (id,)
-        # You can uncomment the below lines if you have a 'cursor' object initialized outside the class
-        self.cursor.execute(sql, val)
-        self.conn.commit()
-        print(val)
+        while True:
+            try:
+                sql = "UPDATE gmaps_queue SET status=1 WHERE id = ?"
+                val = (id,)
+                # You can uncomment the below lines if you have a 'cursor' object initialized outside the class
+                self.cursor.execute(sql, val)
+                self.conn.commit()
+                print(val)
+                break
+            except Exception as e:
+                print(e)
+            time.sleep(2)
     
     def click_privacy(self, driver):
         try:
