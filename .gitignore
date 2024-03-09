@@ -4,3 +4,5 @@ __pycache__
 *.xlsx
 *.csv
 *.db-journal
+*.db-wal
+*.db-shm

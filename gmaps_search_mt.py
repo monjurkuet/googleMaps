@@ -1,6 +1,6 @@
 import threading
 import queue
-import undetected_chromedriver as uc
+from selenium import webdriver
 import json
 import time
 from selenium.webdriver.common.by import By
@@ -15,7 +15,7 @@ class GmapsLinkExtractor:
         self.task_queue = queue.Queue()
         self.workers = []
         self.num_workers = 6  # You can adjust the number of worker threads as needed
-        self.page_view_limit = 10
+        self.page_view_limit = 1000
         self.conn = sqlite3.connect('database.db', check_same_thread=False)
         self.cursor = self.conn.cursor()
         # Initialize workers
@@ -24,7 +24,7 @@ class GmapsLinkExtractor:
             worker.daemon = False
             worker.start()
             self.workers.append(worker)
-            time.sleep(3)
+            time.sleep(1)
             
     def add_task(self, data):
         self.task_queue.put(data)
@@ -55,12 +55,13 @@ class GmapsLinkExtractor:
         driver.quit()
         
     def get_new_driver(self):
-        options = uc.ChromeOptions()
+        options = webdriver.ChromeOptions()
+        options.add_argument("--headless=new")
         caps = options.to_capabilities()
         #caps['goog:loggingPrefs'] = {'performance': 'ALL'}
         #proxy_server = "127.0.0.1:16379"
         #options.add_argument(f'--proxy-server={proxy_server}')
-        return uc.Chrome(options=options, desired_capabilities=caps,headless=True,use_subprocess=True)
+        return webdriver.Chrome(options=options)
     
     def navigate_page(self, location, keyword, driver):
         wait = WebDriverWait(driver, 15)

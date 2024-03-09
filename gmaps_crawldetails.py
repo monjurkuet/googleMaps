@@ -1,16 +1,62 @@
 import sqlite3
 import time
 from urllib.parse import urlparse
-from tqdm import tqdm
+from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
-import undetected_chromedriver as uc
+import threading
+import queue
 
 class GoogleMapsScraper:
-    def __init__(self, database_file='database.db'):
+    def __init__(self, callback):
+        self.callback = callback
+        self.task_queue = queue.Queue()
+        self.workers = []
+        self.num_workers = 6  # You can adjust the number of worker threads as needed
+        self.page_view_limit = 1000
+        database_file='database.db'
         self.conn = sqlite3.connect(database_file, check_same_thread=False)
         self.cursor = self.conn.cursor()
+        # Initialize workers
+        for _ in range(self.num_workers):
+            worker = threading.Thread(target=self.worker_loop)
+            worker.daemon = False
+            worker.start()
+            self.workers.append(worker)
+            time.sleep(1)
+    
+    def add_task(self, data):
+        self.task_queue.put(data)      
+
+    def worker_loop(self):
+        page_view_count = 0
+        driver = self.get_new_driver()
+        while True:
+            try:
+                task = self.task_queue.get(timeout=1)  # Adjust timeout as needed
+                if task is None:
+                    break
+                page_view_count += 1
+                if page_view_count > self.page_view_limit:
+                    page_view_count = 1
+                    driver.quit()
+                    driver = self.get_new_driver()
+                gmaps_url= task
+                try:
+                    print(self.extract_gmaps_details(gmaps_url, driver))
+                except Exception as e:
+                    print(e)
+            except queue.Empty:
+                continue
+        driver.quit()
+
+    def get_new_driver(self):
+        options = webdriver.ChromeOptions()
+        options.add_argument("--headless=new")
+        #proxy_server = "127.0.0.1:16379"
+        #options.add_argument(f'--proxy-server={proxy_server}')
+        return webdriver.Chrome(options=options)
 
     def wait_for_element(self, driver, xpath, timeout=15):
         try:
@@ -25,7 +71,12 @@ class GoogleMapsScraper:
         return url_final.lower()
 
     def get_unprocessed_urls(self):
-        self.cursor.execute("SELECT gmaps_url FROM gmaps_links WHERE gmaps_url NOT IN (SELECT gmaps_url from gmaps_details)")
+        self.cursor.execute("SELECT DISTINCT json_extract(query_parameter, '$.keyword') AS unique_keyword FROM gmaps_links \
+                            WHERE json_extract(query_parameter, '$.keyword') IS NOT NULL;")
+        keywords = [row[0] for row in self.cursor.fetchall()]
+        print(keywords)
+        keyword = input("Enter a keyword: ")
+        self.cursor.execute(f"SELECT gmaps_url FROM gmaps_links WHERE gmaps_url NOT IN (SELECT gmaps_url from gmaps_details) and query_parameter like '%{keyword}%'")
         rows = self.cursor.fetchall()
         urls = [i[0] for i in rows]
         print('Total rows:', len(urls))
@@ -65,44 +116,46 @@ class GoogleMapsScraper:
         self.insert_details(company, rating, category, phone, website, claim_status, latitude, longitude, gmaps_url)
 
     def insert_details(self, company, rating, category, phone, website, claim_status, latitude, longitude, gmaps_url):
-        sql_insert_with_param = """INSERT OR IGNORE INTO gmaps_details
-                                (company, rating, category, phone, website, claim_status, latitude, longitude, gmaps_url) 
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);"""
-        val = (company, rating, category, phone, website, claim_status, latitude, longitude, gmaps_url)
-        self.cursor.execute(sql_insert_with_param, val)
-        self.conn.commit()
-        print(val)
-
-    def extract_gmaps_details(self, gmaps_urls):
-        driver = uc.Chrome()
-        counter = 0
-        for gmaps_url in tqdm(gmaps_urls):
+        while True:
             try:
-                time.sleep(1)
-                driver.get(gmaps_url)
-                self.wait_for_element(driver, '//button[@data-tooltip="Copy phone number"]')
-                time.sleep(4)
-                self.parse_details(driver, gmaps_url)
+                sql_insert_with_param = """INSERT OR IGNORE INTO gmaps_details
+                                        (company, rating, category, phone, website, claim_status, latitude, longitude, gmaps_url) 
+                                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);"""
+                val = (company, rating, category, phone, website, claim_status, latitude, longitude, gmaps_url)
+                self.cursor.execute(sql_insert_with_param, val)
+                self.conn.commit()
+                print(val)
+                break
             except Exception as e:
-                print(f"Error while processing URL: {gmaps_url} - {e}")
-                driver.close()
-                driver.quit()
-                driver = uc.Chrome()
-            counter += 1
-            if counter % 250 == 0:
-                try:
-                    driver.close()
-                    driver.quit()
-                    driver = uc.Chrome()
-                except Exception as e:
-                    print(f"Error while restarting driver: {e}")
+                print(e)
+            time.sleep(2)
+
+    def extract_gmaps_details(self, gmaps_url, driver):
         try:
-            driver.close()
-            driver.quit()
+            driver.get(gmaps_url)
+            self.wait_for_element(driver, '//button[@data-tooltip="Copy phone number"]')
+            time.sleep(2)
+            self.parse_details(driver, gmaps_url)
         except Exception as e:
-            print(f"Error while closing driver: {e}")
+            print(f"Error while processing URL: {gmaps_url} - {e}")
+            return None
+        return 'Crawled' 
+    
+    def close(self):
+        # Stop workers
+        for _ in range(self.num_workers):
+            self.task_queue.put(None)
+        for worker in self.workers:
+            worker.join()
+
+def my_callback(data):
+    print(f"Data processed: {data}")
 
 if __name__ == "__main__":
-    scraper = GoogleMapsScraper()
+    scraper = GoogleMapsScraper(my_callback)
     urls = scraper.get_unprocessed_urls()
-    scraper.extract_gmaps_details(urls)
+    for url in urls:
+        scraper.add_task(url)
+    scraper.close()
+
+
