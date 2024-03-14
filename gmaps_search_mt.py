@@ -14,8 +14,8 @@ class GmapsLinkExtractor:
         self.callback = callback
         self.task_queue = queue.Queue()
         self.workers = []
-        self.num_workers = 6  # You can adjust the number of worker threads as needed
-        self.page_view_limit = 1000
+        self.num_workers = 4 # You can adjust the number of worker threads as needed
+        self.page_view_limit = 3000
         self.conn = sqlite3.connect('database.db', check_same_thread=False)
         self.cursor = self.conn.cursor()
         # Initialize workers
@@ -24,7 +24,7 @@ class GmapsLinkExtractor:
             worker.daemon = False
             worker.start()
             self.workers.append(worker)
-            time.sleep(1)
+            time.sleep(.1)
             
     def add_task(self, data):
         self.task_queue.put(data)
@@ -97,6 +97,7 @@ class GmapsLinkExtractor:
     def insert_data(self, listings_url, query_parameter):
         while True:
             try:
+                self.cursor = self.conn.cursor()
                 for listing_url in listings_url:
                     sql_insert_with_param = """INSERT OR IGNORE INTO gmaps_links
                                         (gmaps_url, query_parameter) 
@@ -114,6 +115,7 @@ class GmapsLinkExtractor:
     def update_queue(self, id):
         while True:
             try:
+                self.cursor = self.conn.cursor()
                 sql = "UPDATE gmaps_queue SET status=1 WHERE id = ?"
                 val = (id,)
                 # You can uncomment the below lines if you have a 'cursor' object initialized outside the class

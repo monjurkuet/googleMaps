@@ -13,7 +13,7 @@ class GoogleMapsScraper:
         self.callback = callback
         self.task_queue = queue.Queue()
         self.workers = []
-        self.num_workers = 6  # You can adjust the number of worker threads as needed
+        self.num_workers = 3  # You can adjust the number of worker threads as needed
         self.page_view_limit = 1000
         database_file='database.db'
         self.conn = sqlite3.connect(database_file, check_same_thread=False)
@@ -118,6 +118,7 @@ class GoogleMapsScraper:
     def insert_details(self, company, rating, category, phone, website, claim_status, latitude, longitude, gmaps_url):
         while True:
             try:
+                self.cursor = self.conn.cursor()
                 sql_insert_with_param = """INSERT OR IGNORE INTO gmaps_details
                                         (company, rating, category, phone, website, claim_status, latitude, longitude, gmaps_url) 
                                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);"""

@@ -2,7 +2,6 @@ import json
 from fake_useragent import UserAgent
 import requests as rq
 import time
-from geodatalocation import geodata_database_location
 import sqlite3
 from tqdm import tqdm
 
@@ -12,8 +11,6 @@ headers = {'user-agent': ua.random}
 conn = sqlite3.connect('database.db', check_same_thread=False)
 cursor = conn.cursor()
 
-conn_location = sqlite3.connect(geodata_database_location, check_same_thread=False)
-cursor_location = conn_location.cursor()
 
 base_url = 'https://nominatim.openstreetmap.org/reverse?format=json&lat={latitude}&lon={longitude}&email=muhamad.manjur@outlook.com'
 
