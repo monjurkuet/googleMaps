@@ -13,7 +13,7 @@ class GoogleMapsScraper:
         self.callback = callback
         self.task_queue = queue.Queue()
         self.workers = []
-        self.num_workers = 3  # You can adjust the number of worker threads as needed
+        self.num_workers = 6  # You can adjust the number of worker threads as needed
         self.page_view_limit = 1000
         database_file='database.db'
         self.conn = sqlite3.connect(database_file, check_same_thread=False)
@@ -70,13 +70,20 @@ class GoogleMapsScraper:
             url_final = urlparse(url).path.replace("www.", "")
         return url_final.lower()
 
+    # def get_unprocessed_urls(self):
+    #     self.cursor.execute("SELECT DISTINCT json_extract(query_parameter, '$.keyword') AS unique_keyword FROM gmaps_links \
+    #                         WHERE json_extract(query_parameter, '$.keyword') IS NOT NULL;")
+    #     keywords = [row[0] for row in self.cursor.fetchall()]
+    #     print(keywords)
+    #     keyword = input("Enter a keyword: ")
+    #     self.cursor.execute(f"SELECT gmaps_url FROM gmaps_links WHERE gmaps_url NOT IN (SELECT gmaps_url from gmaps_details) and query_parameter like '%{keyword}%'")
+    #     rows = self.cursor.fetchall()
+    #     urls = [i[0] for i in rows]
+    #     print('Total rows:', len(urls))
+    #     return urls
+
     def get_unprocessed_urls(self):
-        self.cursor.execute("SELECT DISTINCT json_extract(query_parameter, '$.keyword') AS unique_keyword FROM gmaps_links \
-                            WHERE json_extract(query_parameter, '$.keyword') IS NOT NULL;")
-        keywords = [row[0] for row in self.cursor.fetchall()]
-        print(keywords)
-        keyword = input("Enter a keyword: ")
-        self.cursor.execute(f"SELECT gmaps_url FROM gmaps_links WHERE gmaps_url NOT IN (SELECT gmaps_url from gmaps_details) and query_parameter like '%{keyword}%'")
+        self.cursor.execute("SELECT gmaps_url FROM gmaps_links where id in (SELECT id from osm_reverse_geocode WHERE display_name like '%united states%') and query_parameter like '%insurance%' and gmaps_url not in (SELECT gmaps_url from gmaps_details)")
         rows = self.cursor.fetchall()
         urls = [i[0] for i in rows]
         print('Total rows:', len(urls))

@@ -1,0 +1,1 @@
+SELECT * from gmaps_details where gmaps_url in (SELECT gmaps_url from gmaps_links where query_parameter like "%mowing%") and phone like '+614%' GROUP BY phone

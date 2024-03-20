@@ -1,8 +1,8 @@
 database.db
 geodatalocation.py
 __pycache__
-#*.xlsx
-#*.csv
+*.xlsx
+*.csv
 *.db-journal
 *.db-wal
 *.db-shm
