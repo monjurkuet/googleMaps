@@ -160,7 +160,7 @@ def get_queue():
     keywords = [row[0] for row in cursor.fetchall()]
     print(keywords)
     keyword = input("Enter a keyword: ")
-    cursor.execute(f"SELECT keyword, lat, lon, id FROM gmaps_queue WHERE status=0 AND keyword='{keyword}'")
+    cursor.execute(f"SELECT keyword, lat, lon, id FROM gmaps_queue WHERE status=0 AND keyword='{keyword}' GROUP BY lat,lon")
     rows = cursor.fetchall()
     print('Total rows : ', len(rows))
     return rows
